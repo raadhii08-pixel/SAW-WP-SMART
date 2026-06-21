@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPK Pemilihan Smartphone Terbaik - SAW, WP, SMART</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f4f6f9; padding-bottom: 50px; }
+    .card { border-radius: 12px; }
+    .table-responsive { overflow-x: auto; }
+    th { white-space: nowrap; }
+    .best-row { background-color: #d4edda !important; font-weight: 600; }
+    .step-title { border-left: 4px solid #0d6efd; padding-left: 10px; margin-top: 25px; }
+    .badge-jenis-benefit { background-color: #198754; }
+    .badge-jenis-cost { background-color: #dc3545; }
+    input.form-control, select.form-select { min-width: 90px; }
+    input.nama-input { min-width: 150px; }
+    .bobot-warning { color: #dc3545; font-weight: 600; }
+    .bobot-ok { color: #198754; font-weight: 600; }
+    .btn-hapus { padding: 0.15rem 0.5rem; }
+
+    /* Tab metode */
+    .method-tabs .nav-link {
+      font-weight: 600;
+      color: #6c757d;
+    }
+    .method-tabs .nav-link.active {
+      color: #0d6efd;
+      border-bottom: 3px solid #0d6efd;
+      background-color: transparent;
+    }
+    .method-section { display: none; }
+    .method-section.active { display: block; }
+  </style>
+</head>
+<body>
+
+<div class="container py-4">
+  <div class="text-center mb-4">
+    <span class="badge bg-secondary mb-2">SPK Tugas Kuliah</span>
+    <h2 class="fw-bold">Sistem Pendukung Keputusan</h2>
+    <h4 class="text-primary">Pemilihan Smartphone Terbaik</h4>
+    <p class="text-muted mb-0">Metode: SAW, Weighted Product (WP), dan SMART</p>
+  </div>
+
+  <!-- KRITERIA -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="card-title mb-0">1. Kriteria, Bobot &amp; Jenis</h5>
+        <button class="btn btn-sm btn-outline-primary" onclick="tambahKriteria()">+ Tambah Kriteria</button>
+      </div>
+      <div class="table-responsive mt-3">
+        <table class="table table-bordered table-sm text-center align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Kode</th>
+              <th>Nama Kriteria</th>
+              <th>Bobot</th>
+              <th>Jenis</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tabel-kriteria"></tbody>
+        </table>
+      </div>
+      <p class="mb-0">Total bobot: <span id="total-bobot">-</span> <small class="text-muted">(harus = 1.00)</small></p>
+    </div>
+  </div>
+
+  <!-- DATA ALTERNATIF -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="card-title mb-0">2. Data Alternatif</h5>
+        <button class="btn btn-sm btn-outline-primary" onclick="tambahAlternatif()">+ Tambah Alternatif</button>
+      </div>
+      <div class="table-responsive mt-3">
+        <table class="table table-bordered table-sm text-center align-middle">
+          <thead class="table-light" id="head-data-alternatif"></thead>
+          <tbody id="tabel-data-alternatif"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PILIH METODE -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h5 class="card-title">3. Pilih Metode Perhitungan</h5>
+      <ul class="nav nav-tabs method-tabs" id="method-tab-list">
+        <li class="nav-item">
+          <button class="nav-link active" onclick="pilihMetode('saw')" id="tab-saw">SAW</button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" onclick="pilihMetode('wp')" id="tab-wp">Weighted Product (WP)</button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" onclick="pilihMetode('smart')" id="tab-smart">SMART</button>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="text-center mb-4">
+    <button class="btn btn-primary btn-lg" onclick="hitung()">Hitung</button>
+    <button class="btn btn-outline-secondary btn-lg ms-2" onclick="resetData()">Reset ke Data Awal</button>
+  </div>
+
+  <div id="error-area" class="alert alert-danger d-none"></div>
+
+  <!-- ================= HASIL SAW ================= -->
+  <div id="hasil-saw" class="method-section active">
+    <div id="rekom-saw-area" class="d-none">
+      <div class="card shadow-sm mb-4 border-success">
+        <div class="card-body text-center">
+          <h5 class="card-title">Rekomendasi Terbaik — SAW</h5>
+          <h3 class="text-success fw-bold mb-0" id="rekom-saw">-</h3>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="step-title">Langkah 1 — Matriks Keputusan (X)</h5>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm text-center">
+              <thead class="table-light"><tr id="saw-head-x"></tr></thead>
+              <tbody id="saw-body-x"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="step-title">Langkah 2 — Normalisasi Matriks (R)</h5>
+          <p class="text-muted mb-1">Benefit: <code>rij = Xij / Max(Xj)</code></p>
+          <p class="text-muted">Cost: <code>rij = Min(Xj) / Xij</code></p>
+
+          <h6>2a. Nilai Max &amp; Min per Kriteria</h6>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm text-center">
+              <thead class="table-light"><tr id="saw-head-maxmin"></tr></thead>
+              <tbody id="saw-body-maxmin"></tbody>
+            </table>
+          </div>
+
+          <h6 class="mt-3">2b. Matriks Ternormalisasi (R)</h6>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm text-center">
+              <thead class="table-light"><tr id="saw-head-norm"></tr></thead>
+              <tbody id="saw-body-norm"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="step-title">Langkah 3 — Nilai Preferensi (Vi)</h5>
+          <p class="text-muted"><code>Vi = &Sigma;(Wj &times; rij)</code></p>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm text-center">
+              <thead class="table-light"><tr id="saw-head-v"></tr></thead>
+              <tbody id="saw-body-v"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="step-title">Langkah 4 — Hasil Perangkingan</h5>
+          <p class="text-muted">Diurutkan berdasarkan nilai Vi tertinggi.</p>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm text-center">
+              <thead class="table-light"><tr><th>Rank</th><th>Alternatif</th><th>Nilai Vi</th></tr></thead>
+              <tbody id="saw-body-rank"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= HASIL WP ================= -->
+  <div id="hasil-wp" class="method-section">
+    <div id="rekom-wp-area" class="d-none">
+      <div class="card shadow-sm mb-4 border-success">
+        <div class="card-body text-center">
+          <h5 class="card-title">Rekomendasi Terbaik — Weighted Product</h5>
+          <h3 class="text-success fw-bold mb-0" id="rekom-wp">-</h3>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="step-title">Langkah 1 — Matriks Keputusan (X)</h5>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm text-center">
+              <thead class="table-light"><tr id="wp-head-x"></tr></thead>
+              <tbody id="wp-body-x"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="step-title">Langkah 2 — Perbaikan Bobot (Wj)</h5>
+          <p class="text-muted"><code>Wj = Wj / &Sigma;Wj</code> — karena total bobot sudah 1.00, nilai Wj tidak berubah.</p>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm text-center">
+              <thead class="table-light"><tr id="wp-head-w"></tr></thead>
+              <tbody id="wp-body-w"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="step-title">Langkah 3 — Nilai Vektor S</h5>
+          <p class="text-muted mb-1">Benefit: <code>Sij = Xij<sup>Wj</sup></code></p>
+          <p class="text-muted">Cost: <code>Sij = Xij<sup>-Wj</sup></code>, lalu <code>Si = &prod;Sij</code></p>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm text-center">
+              <thead class="table-light"><tr id="wp-head-s"></tr></thead>
+              <tbody id="wp-body-s"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="step-title">Langkah 4 — Nilai Vektor V</h5>
+          <p class="text-muted"><code>Vi = Si / &Sigma;Si</code></p>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm text-center">
+              <thead class="table-light"><tr><th>Alternatif</th><th>Si</th><th>Vi</th></tr></thead>
+              <tbody id="wp-body-v"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="step-title">Langkah 5 — Hasil Perangkingan</h5>
+          <p class="text-muted">Diurutkan berdasarkan nilai Vi tertinggi.</p>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm text-center">
+              <thead class="table-light"><tr><th>Rank</th><th>Alternatif</th><th>Nilai Vi</th></tr></thead>
+              <tbody id="wp-body-rank"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= HASIL SMART ================= -->
+  <div id="hasil-smart" class="method-section">
+    <div id="rekom-smart-area" class="d-none">
+      <div class="card shadow-sm mb-4 border-success">
+        <div class="card-body text-center">
+          <h5 class="card-title">Rekomendasi Terbaik — SMART</h5>
+          <h3 class="text-success fw-bold mb-0" id="rekom-smart">-</h3>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="step-title">Langkah 1 — Matriks Keputusan (X)</h5>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm text-center">
+              <thead class="table-light"><tr id="smart-head-x"></tr></thead>
+              <tbody id="smart-body-x"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="step-title">Langkah 2 — Nilai Utility (ui)</h5>
+          <p class="text-muted mb-1">Benefit: <code>ui = (Xij - Min) / (Max - Min) &times; 100</code></p>
+          <p class="text-muted">Cost: <code>ui = (Max - Xij) / (Max - Min) &times; 100</code></p>
+
+          <h6>2a. Nilai Max &amp; Min per Kriteria</h6>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm text-center">
+              <thead class="table-light"><tr id="smart-head-maxmin"></tr></thead>
+              <tbody id="smart-body-maxmin"></tbody>
+            </table>
+          </div>
+
+          <h6 class="mt-3">2b. Matriks Utility (ui)</h6>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm text-center">
+              <thead class="table-light"><tr id="smart-head-u"></tr></thead>
+              <tbody id="smart-body-u"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="step-title">Langkah 3 — Nilai Akhir (Vi)</h5>
+          <p class="text-muted"><code>Vi = &Sigma;(Wj &times; ui)</code></p>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm text-center">
+              <thead class="table-light"><tr id="smart-head-v"></tr></thead>
+              <tbody id="smart-body-v"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="step-title">Langkah 4 — Hasil Perangkingan</h5>
+          <p class="text-muted">Diurutkan berdasarkan nilai Vi tertinggi.</p>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm text-center">
+              <thead class="table-light"><tr><th>Rank</th><th>Alternatif</th><th>Nilai Vi</th></tr></thead>
+              <tbody id="smart-body-rank"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="card-title mb-0">Riwayat Perhitungan</h5>
+        <button class="btn btn-sm btn-outline-secondary" onclick="muatHistory()">Refresh</button>
+      </div>
+      <p class="text-muted small mb-2">Riwayat ini tersimpan di database dan bisa dilihat oleh siapa saja yang membuka halaman ini.</p>
+      <div id="history-loading" class="text-muted small">Memuat riwayat...</div>
+      <div class="table-responsive">
+        <table class="table table-bordered table-sm align-middle d-none" id="tabel-history-wrap">
+          <thead class="table-light">
+            <tr>
+              <th>Waktu</th>
+              <th>Metode</th>
+              <th>Jumlah Alternatif</th>
+              <th>Jumlah Kriteria</th>
+              <th>Rekomendasi Terbaik</th>
+              <th>Nilai Vi</th>
+            </tr>
+          </thead>
+          <tbody id="tabel-history"></tbody>
+        </table>
+      </div>
+      <p class="text-muted small d-none" id="history-empty">Belum ada riwayat perhitungan.</p>
+    </div>
+  </div>
+
+  <p class="text-center text-muted small mt-4">Dibuat dengan Bootstrap 5 — SPK Pemilihan Smartphone (SAW, WP, SMART)</p>
+</div>
+
+<script type="module" src="firebase-history.js"></script>
+<script src="saw.js"></script>
+<script src="wp.js"></script>
+<script src="smart.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
